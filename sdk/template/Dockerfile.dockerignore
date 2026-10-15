@@ -1,0 +1,10 @@
+# Read by `docker build -f sdk/template/Dockerfile .` (BuildKit) instead of a
+# root .dockerignore: keep the large local build products out of the context.
+.git
+**/.venv
+runs
+server/target
+server/baselines
+agents/models
+**/__pycache__
+**/*.pyc

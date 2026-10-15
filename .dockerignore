@@ -1,0 +1,6 @@
+.git
+**/target
+**/__pycache__
+**/*.egg-info
+server/baselines
+runs

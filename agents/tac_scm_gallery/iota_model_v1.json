@@ -1,0 +1,21 @@
+{
+  "collector_artifact_sha256": "2aaf4081d72d79f7edc8b24003c7e95b68c068dc298a09bcca9a37de3eae3b91",
+  "demand_rfq_thresholds": [
+    130,
+    220
+  ],
+  "maximum_threshold_adjustment_ppm": 50000,
+  "profit_thresholds_microcredits_per_cycle": [
+    37857380,
+    0,
+    -46250000,
+    -74000000
+  ],
+  "safe_acceptance_high_ppm": 1000000,
+  "safe_acceptance_low_ppm": 0,
+  "schema": "tac-scm-iota-classifier-model/v1",
+  "threshold_update_days": 3,
+  "training_plan_sha256": "3948716f0d59e75fd08a4a53b120516261c5952f9d3f115b5106897461e5270a",
+  "training_result_sha256": "c7e3062c5b202e1dc3697601c11582d50f6768f0511d354c6d12a7aebdfe6bc2",
+  "window_days": 5
+}

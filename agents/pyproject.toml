@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tac-scm-house-agents"
+version = "1.0.0"
+description = "House agents of the TAC SCM challenge, inspired by published TAC SCM agents"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+# tac-scm-sdk is the kit's sdk/ (install it from there; it is not on PyPI).
+# Exact versions used to verify the kit: requirements.txt.
+dependencies = [
+    "tac-scm-sdk==0.5.0",
+    "numpy>=1.26,<3",
+    "scipy>=1.11,<2",
+]
+
+[project.scripts]
+redagent-inspired-v1 = "tac_scm_gallery.house:redagent_inspired_v1"
+deepmaize-inspired-v1 = "tac_scm_gallery.house:deepmaize_inspired_v1"
+packatac-inspired-v1 = "tac_scm_gallery.house:packatac_inspired_v1"
+crocodile-inspired-v1 = "tac_scm_gallery.house:crocodile_inspired_v1"
+phantagent-inspired-v1 = "tac_scm_gallery.house:phantagent_inspired_v1"
+minnetac-inspired-v1 = "tac_scm_gallery.house:minnetac_inspired_v1"
+botticelli-inspired-v1 = "tac_scm_gallery.house:botticelli_inspired_v1"
+narc-inspired-v1 = "tac_scm_gallery.house:narc_inspired_v1"
+southampton-inspired-v1 = "tac_scm_gallery.house:southampton_inspired_v1"
+tactex-inspired-v1 = "tac_scm_gallery.house:tactex_inspired_v1"
+socrates-inspired-v1 = "tac_scm_gallery.house:socrates_inspired_v1"
+mertacor-inspired-v1 = "tac_scm_gallery.house:mertacor_inspired_v1"
+iota-inspired-v1 = "tac_scm_gallery.house:iota_inspired_v1"
+tactex-inspired-v4-m3 = "tac_scm_gallery.house:tactex_inspired_v4_m3"
+tactex-inspired-v4-m4 = "tac_scm_gallery.house:tactex_inspired_v4_m4"
+tactex-inspired-v4-m5 = "tac_scm_gallery.house:tactex_inspired_v4_m5"
+deepmaize-inspired-v4-m2 = "tac_scm_gallery.house:deepmaize_inspired_v4_m2"
+botticelli-inspired-v4 = "tac_scm_gallery.house:botticelli_inspired_v4"
+botticelli-inspired-v4-1 = "tac_scm_gallery.house:botticelli_inspired_v4_1"
+
+[tool.setuptools]
+packages = ["tac_scm_gallery"]
+
+[tool.setuptools.package-data]
+tac_scm_gallery = ["*_model_v1.json"]

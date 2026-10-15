@@ -1,0 +1,552 @@
+u16 = 0..65535
+u32 = 0..4294967295
+u64 = 0..18446744073709551615
+i64 = -9223372036854775808..9223372036854775807
+day = 0..219
+money = i64
+quantity = u32
+ppb = 0..1000000000
+digest = bytes .size 32
+external-id = tstr .regexp "[a-z0-9][a-z0-9._-]{0,31}"
+engine-id = tstr .regexp "[a-z0-9][a-z0-9._/-]{0,95}"
+agent-cash-account-id = tstr .regexp "agent-cash/[a-z0-9][a-z0-9._-]{0,31}"
+ledger-account-id = agent-cash-account-id / "bank-interest" /
+                    "supplier-market" / "customer-market" / "storage-market"
+schema-id = tstr .size (1..64)
+
+role = "coordinator" / "engine" / "manufacturer" / "supplier" /
+       "customer" / "factory" / "bank" / "runner" / "visualizer"
+phase = "plan" / "setup" / "finance-open" / "supplier-fulfillment" /
+        "factory-execution" / "customer-settlement" / "inventory-close" /
+        "observation" / "action-window" / "action-commit" /
+        "final-settlement" / "terminated" / "aborted"
+
+message = {
+  "schema_id": schema-id,
+  "schema_version": [u16, u16, u16],
+  "game_id": engine-id,
+  "message_id": engine-id,
+  "sender_role": role,
+  "sender_id": engine-id,
+  "recipient": engine-id,
+  ? "game_day": day,
+  "phase": phase,
+  "sender_sequence": u64,
+  ? "causation_id": engine-id,
+  ? "final_submission": bool,
+  "payload_digest": digest,
+  "payload": game-bootstrap / day-observation / day-action-set /
+             action-receipt / action-committed / game-finished
+}
+
+game-bootstrap = {
+  "type": "game-bootstrap",
+  "game_definition_id": engine-id,
+  "schema": artifact-reference,
+  "profile": artifact-reference,
+  "modules": [3*3 artifact-reference],
+  "agent_id": external-id,
+  "agent_slot": 0..5,
+  "roster": [6*6 external-id],
+  "semantic_configuration": semantic-configuration,
+  "catalog": catalog,
+  "latest_committed_day": null / day
+}
+
+day-observation = {
+  "type": "day-observation",
+  "observation_id": engine-id,
+  "day": day,
+  "state_commitment": digest,
+  "event_cursor": u64,
+  "cash_microcredits": money,
+  "ledger_since_previous": [* ledger-transaction],
+  "component_inventory": [* inventory-item],
+  "pc_inventory": [* inventory-item],
+  "pending_inventory": [* inventory-item],
+  "production_results": [* schedule-result],
+  "delivery_results": [* schedule-result],
+  "supplier_rfqs": [* supplier-rfq],
+  "supplier_offers": [* supplier-offer],
+  "supplier_orders": [* supplier-order],
+  "supplier_deliveries": [* supplier-delivery],
+  "supplier_reputations": [* supplier-reputation],
+  "customer_rfqs": [* customer-rfq],
+  "new_customer_orders": [* customer-order],
+  "active_customer_orders": [* customer-order],
+  "customer_settlements": [* customer-settlement],
+  "previous_action": null / action-disposition,
+  "daily_price_report": daily-price-report,
+  "market_report": null / market-report,
+  "default_history": [* default-record]
+}
+
+day-action-set = {
+  "type": "day-action-set",
+  "agent_id": external-id,
+  "observation_id": engine-id,
+  "day": day,
+  "revision": u32,
+  "customer_offers": [* customer-offer-command],
+  "supplier_rfqs": [* supplier-rfq-command],
+  "supplier_orders": [* supplier-order-command],
+  "production_schedule": [* production-line],
+  "delivery_schedule": [* delivery-line]
+}
+
+action-receipt = {
+  "type": "action-receipt",
+  "day": day,
+  "revision": null / u32,
+  "action_digest": null / digest,
+  "receipt_ordinal": u64,
+  "candidate_valid": bool,
+  "errors": [* rejection]
+}
+
+action-committed = {
+  "type": "action-committed",
+  "day": day,
+  "action_digest": digest,
+  "cause": default-cause,
+  "command_results": [* command-result]
+}
+
+game-finished = completed-game-finished / aborted-game-finished
+completed-game-finished = {
+  "type": "game-finished",
+  "status": "completed", "scores": [6*6 score],
+  "final_state_commitment": digest
+}
+aborted-game-finished = {
+  "type": "game-finished",
+  "status": "aborted", "scores": null,
+  "final_state_commitment": digest, "abort_reason": abort-code
+}
+
+default-cause = "agent-submission" / "missing" / "timeout" /
+                "process-exit" / "resource-limit" / "transport-error"
+rejection-code = "wrong-game" / "wrong-agent" / "wrong-day" /
+                 "wrong-phase" / "stale-observation" / "bad-revision" /
+                 "idempotency-conflict" / "schema-invalid" / "cardinality" /
+                 "duplicate-id" / "unknown-reference" / "expired" /
+                 "role-forbidden" / "out-of-range" / "term-mismatch" /
+                 "conflicting-alternatives" / "insufficient-capacity" /
+                 "insufficient-inventory" / "later-effect" / "overflow"
+abort-code = "invariant-violation" / "arithmetic-overflow" /
+             "state-corruption" / "persistence-failure" /
+             "event-log-failure" / "configuration-invalid" /
+             "seed-unavailable" / "operator-abort"
+rejection = {"code": rejection-code, "path": tstr, "detail": tstr}
+command-result = {
+  "command_id": external-id,
+  "accepted": bool,
+  ? "rejection": rejection
+}
+action-disposition = {
+  "day": day,
+  "action_digest": digest,
+  "cause": default-cause,
+  ? "revision": u32
+}
+default-record = {"day": day, "cause": default-cause}
+
+customer-offer-command = {"command_id": external-id, "rfq_id": engine-id, "unit_price": money}
+customer-bid = {
+  "bid_id": engine-id, "agent_id": external-id, "rfq_id": engine-id,
+  "bid_day": day, "award_day": day, "unit_price": money
+}
+supplier-order-command = {"command_id": external-id, "offer_id": engine-id}
+production-line = {
+  "line_id": external-id, "priority": u32, "product_id": external-id,
+  "quantity": 1..4294967295
+}
+delivery-line = {
+  "line_id": external-id, "priority": u32, "customer_order_id": engine-id,
+  "quantity": 1..4294967295
+}
+schedule-kind = "production" / "delivery"
+schedule-result = {
+  "result_id": engine-id, "agent_id": external-id,
+  "schedule_kind": schedule-kind, "line_id": external-id,
+  "executed": bool, "quantity": quantity,
+  ? "rejection": rejection
+}
+
+supplier-rfq-command = {
+  "command_id": external-id, "rfq_id": external-id,
+  "supplier_id": external-id, "component_id": external-id,
+  "quantity": quantity, "due_day": day, "max_unit_price": null / money
+}
+supplier-rfq = {
+  "rfq_id": engine-id, "agent_id": external-id, "client_rfq_id": external-id,
+  "supplier_id": external-id, "component_id": external-id,
+  "quantity": quantity, "due_day": day, "max_unit_price": null / money
+}
+supplier-offer-kind = "on-date" / "complete" / "probe" / "none"
+supplier-offer = {
+  "offer_id": engine-id, "alternative_group_id": engine-id,
+  "rfq_id": engine-id, "agent_id": external-id, "supplier_id": external-id,
+  "component_id": external-id, "kind": supplier-offer-kind,
+  "quantity": quantity, "due_day": day, "unit_price": money,
+  "valid_day": day, "reputation_exposure": quantity,
+  "no_offer_reason": null / rejection-code
+}
+supplier-order = {
+  "order_id": engine-id, "offer_id": engine-id, "agent_id": external-id, "supplier_id": external-id,
+  "component_id": external-id, "quantity": quantity, "due_day": day,
+  "unit_price": money, "down_payment": money, "acceptance_ordinal": u64,
+  "delivered_quantity": quantity
+}
+supplier-delivery = {
+  "delivery_id": engine-id, "order_id": engine-id,
+  "component_id": external-id, "quantity": quantity,
+  "unit_price": money, "invoice": money
+}
+supplier-reputation = {
+  "reputation_id": engine-id, "supplier_id": external-id,
+  "component_id": external-id, "agent_id": external-id,
+  "offered": u64, "purchased": u64,
+  "reputation_ppm": 0..1000000
+}
+
+customer-rfq = {
+  "rfq_id": engine-id, "product_id": external-id, "quantity": quantity,
+  "due_day": day, "unit_reserve": money, "daily_penalty": money
+}
+customer-order = {
+  "order_id": engine-id, "rfq_id": engine-id, "agent_id": external-id,
+  "product_id": external-id, "quantity": quantity, "due_day": day,
+  "unit_price": money, "daily_penalty": money,
+  "penalty_count": 0..5,
+  "status": "open" / "delivered-pending-payment" / "delivered-paid" / "cancelled",
+  "payment_status": "not-due" / "due" / "paid",
+  "delivery_day": null / day
+}
+customer-settlement = {
+  "settlement_id": engine-id, "order_id": engine-id,
+  "delivered": bool, "payment": money, "penalty": money,
+  "penalty_count": 0..5, "cancelled": bool
+}
+
+inventory-kind = "component" / "pc" / "pending-component" / "pending-pc"
+inventory-item = {
+  "inventory_id": engine-id, "agent_id": external-id,
+  "inventory_kind": inventory-kind, "item_id": external-id,
+  "quantity": quantity
+}
+ledger-transaction = {
+  "transaction_id": engine-id, "day": day, "phase": phase,
+  "source_account": ledger-account-id, "destination_account": ledger-account-id,
+  "amount": 1..9223372036854775807, "reason": ledger-reason,
+  "cause_id": engine-id
+}
+ledger-reason = "bank-interest" / "supplier-down-payment" /
+                "supplier-delivery-balance" / "supplier-refund" /
+                "customer-payment" / "late-penalty" / "storage-charge"
+score = {"agent_id": external-id, "cash_microcredits": money}
+daily-price-report = {"day": day, "products": [16*16 price-range]}
+price-range = {"product_id": external-id, "minimum": null / money, "maximum": null / money}
+market-report = {
+  "start_day": day, "end_day": day,
+  "products": [16*16 product-market-row],
+  "components": [10*10 component-market-row],
+  "supplier_lines": [* capacity-market-row]
+}
+product-market-row = {
+  "product_id": external-id, "rfq_count": u64, "rfq_quantity": u64,
+  "order_count": u64, "order_quantity": u64,
+  "minimum_price": null / money, "maximum_price": null / money,
+  "mean_price": null / money
+}
+component-market-row = {
+  "component_id": external-id, "ordered_quantity": u64,
+  "delivered_quantity": u64, "mean_unit_price": null / money
+}
+capacity-market-row = {
+  "supplier_id": external-id, "component_id": external-id,
+  "mean_capacity_nano": null / u64
+}
+
+artifact-reference = {"id": schema-id, "revision": u32, "sha256": digest}
+artifact-manifest = {
+  "name": tstr, "version": tstr, "sha256": digest, "media_type": tstr,
+  "byte_length": u64, "source_revision": tstr, "build_recipe_sha256": digest,
+  "dependency_lock_sha256": digest, "license": tstr, "platform": tstr
+}
+seed-manifest = {
+  "root_seed_commitment": digest, "seed_reference": tstr,
+  "derivation_id": schema-id, "prng_id": schema-id,
+  "sampler_ids": [* schema-id], "stream_registry": [* stream-registry-entry]
+}
+stream-registry-entry = static-stream-entry / dynamic-stream-entry
+static-stream-entry = {"kind": "static", "name": tstr}
+dynamic-stream-entry = {
+  "kind": "pattern", "segments": [1* (tstr / stream-placeholder)]
+}
+stream-placeholder = "{supplier}" / "{component}" / "{day}" /
+                     "{segment}" / "{rfq-id}"
+
+game-plan-manifest = {
+  "schema": artifact-reference, "profile": artifact-reference,
+  "modules": [3*3 artifact-reference], "semantic": semantic-configuration,
+  "operational": operational-configuration, "seed": seed-manifest,
+  "engine": artifact-manifest, "runner": artifact-manifest,
+  "agents": [6*6 artifact-manifest], "run_nonce": bytes .size 16,
+  "created_at": tstr, "clean_source_revision": tstr
+}
+game-result-manifest = completed-game-result-manifest / aborted-game-result-manifest
+completed-game-result-manifest = {
+  "schema": artifact-reference, "game_definition_id": engine-id,
+  "action_transcript_sha256": digest, "event_log_sha256": digest,
+  "final_state_sha256": digest, "termination": "completed",
+  "scores": [6*6 score], ? "protocol_audit_sha256": digest
+}
+aborted-game-result-manifest = {
+  "schema": artifact-reference, "game_definition_id": engine-id,
+  "action_transcript_sha256": digest, "event_log_sha256": digest,
+  "final_state_sha256": digest, "termination": "aborted", "scores": null,
+  "abort_reason": abort-code, ? "protocol_audit_sha256": digest
+}
+
+semantic-configuration = {
+  "profile": artifact-reference, "modules": [3*3 artifact-reference],
+  "participants": [6*6 external-id], "calendar": calendar-config,
+  "factory": factory-config, "catalog": catalog, "finance": finance-config,
+  "customer": customer-config, "supplier": supplier-config,
+  "randomness": randomness-config, "arithmetic": arithmetic-config
+}
+operational-configuration = {
+  "runner_sha256": digest, "transport_id": schema-id,
+  "deadline_policy": tstr, "receipt_policy": tstr,
+  "resource_policy": tstr, "audit_retention": bool,
+  "viewer_access_policy": tstr, "agent_runtime_sha256": [6*6 digest]
+}
+calendar-config = {"first_day": 0, "last_day": 219, "days": 220}
+factory-config = {"cycles_per_day": 2000, "production_lines_max": 256, "delivery_lines_max": 4096}
+finance-config = {"loan_rate_ppb": ppb, "deposit_rate_ppb": ppb, "storage_rate_ppb": ppb, "rounding_id": schema-id}
+customer-config = {
+  "low_initial_q_nano": u64, "mid_initial_q_nano": u64,
+  "high_initial_q_nano": u64, "trend_min_ppb": ppb,
+  "trend_max_ppb": u64, "quantity_min": 1, "quantity_max": 20,
+  "lead_min": 3, "lead_max": 12, "reserve_percent_min": 75,
+  "reserve_percent_max": 125, "penalty_percent_min": 5,
+  "penalty_percent_max": 15, "penalty_cap": 5, "report_period": 20
+}
+supplier-config = {
+  "nominal_capacity": 550, "initial_capacity_min": 357,
+  "initial_capacity_max": 743, "reservation_horizon": 20,
+  "reservation_reduction_ppb": 5000000, "price_discount_ppb": 500000000,
+  "single_source_apr_ppb": 750000000, "two_source_apr_ppb": 450000000,
+  "allocation_exponent": 3, "down_payment_ppb": 100000000
+}
+randomness-config = {"seed": seed-manifest}
+arithmetic-config = {
+  "money_scale": 1000000, "rate_scale": 1000000000,
+  "intermediate_bits": 128, "rounding_id": "round-half-even",
+  "overflow": "abort-or-reject"
+}
+catalog = {"components": [10*10 component], "products": [16*16 product], "suppliers": [8*8 supplier]}
+component = {"id": external-id, "base_microcredits": money, "suppliers": [1*2 external-id]}
+product = {"id": external-id, "components": [4*4 external-id], "cycles": 4..7, "segment": "low" / "mid" / "high"}
+supplier = {"id": external-id, "components": [1*4 external-id]}
+
+authoritative-state = {
+  "game_id": engine-id, "day": null / day, "phase": phase,
+  "agents": [6*6 agent-state], "supplier_lines": [* supplier-line-state],
+  "customer": customer-state, "ledger": ledger-state,
+  "random_streams": [* random-stream-state],
+  "retired_random_streams_sha256": digest,
+  "retired_random_stream_count": u64,
+  "committed_actions": [* committed-action-state],
+  "termination": termination-state
+}
+agent-state = {
+  "state_id": engine-id, "agent_id": external-id, "cash": money,
+  "components": [* inventory-item], "pcs": [* inventory-item],
+  "pending_components": [* inventory-item], "pending_pcs": [* inventory-item],
+  "production_schedule": [* production-line], "delivery_schedule": [* delivery-line],
+  "production_results": [* schedule-result], "delivery_results": [* schedule-result],
+  "supplier_rfqs": [* supplier-rfq], "supplier_orders": [* supplier-order],
+  "supplier_deliveries": [* supplier-delivery],
+  "customer_offers": [* customer-bid], "customer_orders": [* customer-order],
+  "new_customer_order_ids": [* engine-id],
+  "customer_settlements": [* customer-settlement],
+  "pending_command_rejections": [* command-rejection-state],
+  "last_observation_id": null / engine-id, "default_history": [* default-record]
+}
+supplier-line-state = {
+  "line_id": engine-id, "supplier_id": external-id, "component_id": external-id,
+  "actual_capacity": quantity, "expected_capacity": [* capacity-forecast],
+  "willing_capacity": [* capacity-forecast], "inventory": quantity,
+  "acceptance_ordinal_next": u64, "orders": [* supplier-order],
+  "pending_rfqs": [* supplier-rfq], "pending_offers": [* supplier-offer],
+  "reputations": [6*6 supplier-reputation]
+}
+capacity-forecast = {"production_day": day, "quantity": quantity}
+customer-state = {
+  "segments": [3*3 segment-state], "rfqs": [* customer-rfq],
+  "offers": [* customer-bid], "orders": [* customer-order],
+  "staged_deliveries": [* staged-customer-delivery],
+  "report_accumulator": market-report-accumulator,
+  "daily_price_accumulator": [16*16 price-range],
+  "pending_market_report": null / market-report
+}
+staged-customer-delivery = {"agent_id": external-id, "line": delivery-line}
+segment-state = {"segment": "low" / "mid" / "high", "q_nano": u64, "trend_ppb": u64, "next_ordinal": u64}
+market-report-accumulator = {
+  "start_day": day,
+  "products": [16*16 product-market-accumulator],
+  "components": [10*10 component-market-accumulator],
+  "supplier_lines": [* capacity-market-accumulator]
+}
+product-market-accumulator = {
+  "product_id": external-id, "rfq_count": u64, "rfq_quantity": u64,
+  "order_count": u64, "order_quantity": u64,
+  "winning_price_sum": int, "winning_price_count": u64,
+  "winning_min": null / money, "winning_max": null / money
+}
+component-market-accumulator = {
+  "component_id": external-id, "ordered_quantity": u64,
+  "delivered_quantity": u64, "ordered_price_sum": int
+}
+capacity-market-accumulator = {
+  "supplier_id": external-id, "component_id": external-id,
+  "capacity_sum": u64, "capacity_count": u64
+}
+command-rejection-state = {
+  "agent_id": external-id, "command_id": external-id, "rejection": rejection
+}
+ledger-state = {"transactions": [* ledger-transaction], "accounts": [* account-balance]}
+account-balance = {"account_id": ledger-account-id, "balance": money}
+random-stream-state = {"name": tstr, "byte_position": u64}
+committed-action-state = {"day": day, "agent_id": external-id, "action_digest": digest, "cause": default-cause}
+committed-action = {"state": committed-action-state, "action": day-action-set}
+committed-transcript = [* committed-action]
+termination-state = running-termination / completed-termination / aborted-termination
+running-termination = {"status": "running"}
+completed-termination = {"status": "completed"}
+aborted-termination = {"status": "aborted", "reason": abort-code}
+
+event = {
+  "schema_id": "tac-scm-event/3",
+  "event_index": u64, "event_type": event-type, "game_id": engine-id,
+  ? "day": day, "phase": phase, "causes": [* engine-id],
+  "visibility": visibility, "payload": event-payload,
+  "previous_event_hash": digest, ? "state_commitment": digest,
+  "event_hash": digest
+}
+visibility = {"kind": "public" / "private" / "operator", "audience": [* external-id]}
+event-type = "game-declared" / "configuration-declared" / "seed-declared" /
+             "artifact-declared" / "phase-opened" / "random-draw" /
+             "action-committed" / "command-result" / "entity-changed" /
+             "ledger-transferred" / "report-published" / "phase-closed" /
+             "economic-event" / "operator-summary" /
+             "game-finished" / "game-aborted"
+event-payload = declaration-event / phase-event / random-event /
+                action-event / command-event / entity-event / ledger-event /
+                report-event / economic-event / operator-summary-event / finish-event
+declaration-event = {"game_definition_id": engine-id, "configuration_sha256": digest}
+phase-event = {"phase": phase}
+random-event = {
+  "stream_name": tstr, "ordinal": u64, "raw_u64": u64,
+  "result": int / tstr / tie-random-result
+}
+tie-random-result = {
+  "candidates": [1* engine-id], "selected_index": u64, "winner": engine-id
+}
+action-event = {"agent_id": external-id, "disposition": action-disposition}
+command-event = {"agent_id": external-id, "result": command-result}
+entity-type = "agent-state" / "supplier-line-state" / "supplier-rfq" /
+              "supplier-offer" / "supplier-order" / "supplier-delivery" /
+              "supplier-reputation" / "customer-rfq" / "customer-bid" / "customer-order" /
+              "customer-settlement" / "inventory-item" / "schedule-result"
+entity-event = {"entity_type": entity-type, "entity_id": engine-id, "operation": "created" / "updated" / "removed", "value": bytes, "value_sha256": digest}
+ledger-event = {"transaction": ledger-transaction}
+report-event = {"report": daily-price-report / market-report}
+economic-event = {
+  "economic_id": engine-id,
+  "kind": "supplier-price" / "supplier-allocation" / "supplier-production" /
+          "supplier-inventory" / "supplier-refund" / "customer-demand" /
+          "customer-award" / "customer-payment" / "customer-penalty" /
+          "customer-cancellation" / "factory-production" /
+          "factory-delivery" / "factory-inventory" /
+          "bank-interest-assessment" / "storage-assessment" /
+          "command-rejection",
+  ? "subject_id": engine-id, "value": bytes, "value_sha256": digest
+}
+economic-detail = supplier-price-detail / supplier-allocation-detail /
+                  supplier-production-detail / supplier-inventory-detail /
+                  supplier-refund-detail / customer-demand-detail /
+                  customer-award-detail / customer-payment-detail /
+                  customer-penalty-detail / customer-cancellation-detail /
+                  factory-production-detail / factory-delivery-detail /
+                  factory-inventory-detail / bank-interest-detail /
+                  storage-assessment-detail / command-rejection-detail
+supplier-price-detail = {"unit_price": money}
+supplier-allocation-detail = {"on_date_quantity": quantity}
+supplier-production-detail = {"actual_capacity": quantity}
+supplier-inventory-detail = {"before": quantity, "after": quantity}
+supplier-refund-detail = {
+  "order_id": engine-id, "undelivered_quantity": quantity, "amount": money
+}
+customer-demand-detail = {
+  "segment": "low" / "mid" / "high", "q_nano": u64,
+  "trend_ppb": u64, "next_ordinal": u64
+}
+customer-award-detail = {"bid_id": engine-id, "order_id": engine-id}
+customer-payment-detail = {"settlement_id": engine-id, "amount": money}
+customer-penalty-detail = {
+  "settlement_id": engine-id, "penalty_count": 1..5, "amount": money
+}
+customer-cancellation-detail = {
+  "settlement_id": engine-id, "penalty_count": 5
+}
+factory-production-detail = {
+  "agent_id": external-id, "line_id": external-id,
+  "result_id": engine-id, "product_id": external-id,
+  "quantity": quantity, "cycles": u64
+}
+factory-delivery-detail = {
+  "agent_id": external-id, "line_id": external-id,
+  "result_id": engine-id, "order_id": engine-id,
+  "product_id": external-id, "quantity": quantity
+}
+factory-inventory-detail = {
+  "agent_id": external-id, "inventory_id": engine-id,
+  "inventory_kind": inventory-kind, "item_id": external-id,
+  "before": quantity, "after": quantity
+}
+bank-interest-detail = {
+  "agent_id": external-id, "opening_cash": money,
+  "annual_rate_ppb": ppb, "amount": money,
+  "direction": "debit" / "credit"
+}
+storage-assessment-detail = {
+  "agent_id": external-id, "inventory_value": int,
+  "annual_rate_ppb": ppb, "amount": money
+}
+command-rejection-detail = {
+  "agent_id": external-id, "command_id": external-id,
+  "code": rejection-code, "field_path": tstr, "detail": tstr
+}
+operator-summary-event = {
+  "day": day, "agents": [6*6 operator-agent-summary],
+  "supplier_lines": [* operator-supplier-summary]
+}
+operator-agent-summary = {
+  "agent_id": external-id, "cash_microcredits": money,
+  "component_inventory": [* inventory-item], "pc_inventory": [* inventory-item],
+  "active_customer_orders": [* customer-order],
+  "supplier_orders": [* supplier-order],
+  "production_results": [* schedule-result], "delivery_results": [* schedule-result],
+  "supplier_deliveries": [* supplier-delivery],
+  "customer_settlements": [* customer-settlement], "defaults": u64
+}
+operator-supplier-summary = {
+  "supplier_id": external-id, "component_id": external-id,
+  "actual_capacity": quantity, "inventory": quantity
+}
+finish-event = completed-finish-event / aborted-finish-event
+completed-finish-event = {"status": "completed", "scores": [6*6 score]}
+aborted-finish-event = {"status": "aborted", "scores": null, "abort_reason": abort-code}

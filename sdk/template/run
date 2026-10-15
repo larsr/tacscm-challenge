@@ -1,0 +1,6 @@
+#!/bin/sh
+# Starts the agent. The game runs this file with the protocol on stdin and
+# stdout (sdk/PROTOCOL.md); in a submission image it is /agent/run. Change
+# the line below if your agent starts differently, and keep the `exec` so
+# that the agent itself receives end of input.
+exec python "$(dirname "$0")/my_agent.py"

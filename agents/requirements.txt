@@ -1,0 +1,5 @@
+# Exact third-party versions the house agents were verified with (Python 3.12).
+# Install with the kit's SDK and agents:
+#   pip install -r agents/requirements.txt ./sdk -e ./agents
+numpy==2.2.6
+scipy==1.16.3

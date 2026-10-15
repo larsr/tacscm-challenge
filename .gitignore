@@ -1,0 +1,12 @@
+target/
+__pycache__/
+*.pyc
+*.egg-info/
+build/
+.venv/
+/runs/
+.DS_Store
+# Built by server/scripts/build-test-baselines for the runner tests.
+/server/baselines/
+# Large model files are release assets, not committed (agents/MODELS.md).
+/agents/models/**/*.npz

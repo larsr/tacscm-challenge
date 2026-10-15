@@ -1,0 +1,10 @@
+# Read by `docker build -f server/Dockerfile .` (BuildKit): keep local build
+# products and environments out of the context. agents/models stays in: the
+# image carries the models (agents/MODELS.md).
+.git
+**/.venv
+runs
+server/target
+server/baselines
+**/__pycache__
+**/*.pyc

@@ -1,0 +1,61 @@
+{
+  "coefficient_scale": 1000000,
+  "collector_artifact_sha256": "c02a5fde169ef7d76722e09e977256491b37d133b156c8439f1e5632199fc8e6",
+  "demand": {
+    "coefficients_ppm": [
+      87830071,
+      -1456243,
+      -26195,
+      409097
+    ],
+    "features": [
+      "bias",
+      "day_percent",
+      "current_rfq_units",
+      "rolling_five_minus_current"
+    ],
+    "maximum_adjustment": "max(25,current_rfq_units/2)",
+    "shrinkage_ppm": 1000000,
+    "target": "mean-public-customer-rfq-units-next-five-days-minus-current"
+  },
+  "numeric_method": "exact-rational-ridge-to-integer-ppm",
+  "offer_acceptance": {
+    "hierarchical_smoothing_pseudocount": 512,
+    "monotonicity": "non-increasing-with-price-ratio",
+    "price_ratio_thresholds_ppm": [
+      820000,
+      860000,
+      900000,
+      940000
+    ],
+    "probability_ppm": [
+      759391,
+      759391,
+      759391,
+      759391,
+      737708
+    ],
+    "target": "next-observation-public-order-for-own-offer"
+  },
+  "ridge": 10,
+  "schema": "tac-scm-tactex-public-model/v1",
+  "supplier_price": {
+    "coefficients_ppm": [
+      790985989058,
+      -3324392,
+      -478602995,
+      -194448805,
+      -2828759990
+    ],
+    "features": [
+      "bias",
+      "day_percent",
+      "lead_days",
+      "quantity_units",
+      "public_reputation_percent"
+    ],
+    "target": "mean-public-supplier-offer-price-over-base-ppm"
+  },
+  "training_plan_sha256": "0aa5352a74cc52dad249ccb946ec13284bdd7dd8757e4108fe343f93f463d506",
+  "training_result_sha256": "ec420417ecee923c0842aae5fd1fa4c9e90693e9d5c329c4ba5dca3eafd1f1eb"
+}

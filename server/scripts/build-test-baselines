@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""Build the three baseline executables the runner tests play.
+
+Each is a deterministic, standard-library-only Python zipapp made from the
+kit's sdk/ (tac_scm_sdk and tac_scm_baselines), written to server/baselines/.
+Run from anywhere: `python3 server/scripts/build-test-baselines`.
+"""
+
+from __future__ import annotations
+
+import io
+from pathlib import Path
+import stat
+import zipfile
+
+SERVER = Path(__file__).resolve().parent.parent
+SDK = SERVER.parent / "sdk"
+OUTPUT = SERVER / "baselines"
+EPOCH = (1980, 1, 1, 0, 0, 0)
+BASELINES = {
+    "baseline-random-v2": "random_main",
+    "baseline-heuristic-v2": "heuristic_main",
+    "baseline-optimizer-v2": "optimizer_main",
+}
+
+
+def entry(name: str, raw: bytes) -> tuple[zipfile.ZipInfo, bytes]:
+    info = zipfile.ZipInfo(name, EPOCH)
+    info.compress_type = zipfile.ZIP_STORED
+    info.create_system = 3
+    info.external_attr = (stat.S_IFREG | 0o644) << 16
+    return info, raw
+
+
+def build(function: str) -> bytes:
+    archive = io.BytesIO()
+    with zipfile.ZipFile(archive, "w") as output:
+        for package in ("tac_scm_sdk", "tac_scm_baselines"):
+            for path in sorted((SDK / package).glob("*.py")):
+                output.writestr(*entry(f"{package}/{path.name}", path.read_bytes()))
+        main = f"from tac_scm_baselines.agent_main import {function}\nraise SystemExit({function}())\n"
+        output.writestr(*entry("__main__.py", main.encode()))
+    return b"#!/usr/bin/env python3\n" + archive.getvalue()
+
+
+def main() -> int:
+    OUTPUT.mkdir(exist_ok=True)
+    for name, function in BASELINES.items():
+        target = OUTPUT / name
+        target.write_bytes(build(function))
+        target.chmod(0o755)
+        print(target)
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
