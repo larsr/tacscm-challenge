@@ -1,0 +1,69 @@
+# Dev pod for the TAC SCM kit on ICE: the .devcontainer image, the fork cloned into tacscm-challenge/ on larsr-disk.
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tacscm-dev
+  labels:
+    app: tacscm-dev
+spec:
+  replicas: 1
+  strategy:
+    type: Recreate  # the disk is ReadWriteOnce
+  selector:
+    matchLabels:
+      app: tacscm-dev
+  template:
+    metadata:
+      labels:
+        app: tacscm-dev
+    spec:
+      imagePullSecrets:
+        - name: ghcr-pull-secret
+      # No fsGroup: it would re-own the whole shared disk. Only our folder is chowned.
+      initContainers:
+        - name: workspace-owner
+          image: ghcr.io/larsr/tacscm-challenge-devcontainer:latest
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 0
+          command: [sh, -c, "mkdir -p /disk/tacscm-challenge && chown 1000:1000 /disk/tacscm-challenge"]
+          volumeMounts:
+            - name: disk
+              mountPath: /disk
+      containers:
+        - name: dev
+          image: ghcr.io/larsr/tacscm-challenge-devcontainer:latest
+          imagePullPolicy: Always
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+          workingDir: /workspaces/tacscm-challenge
+          env:
+            - name: REPO_URL
+              value: https://github.com/larsr/tacscm-challenge.git
+          command: [bash, -c]
+          args:
+            - |
+              repo=/workspaces/tacscm-challenge
+              [ -d "$repo/.git" ] || git clone "$REPO_URL" "$repo"
+              cd "$repo" && .devcontainer/setup.sh && touch /tmp/ready
+              exec sleep infinity
+          readinessProbe:
+            exec:
+              command: [test, -f, /tmp/ready]
+            periodSeconds: 10
+          resources:
+            requests:
+              cpu: "16"
+              memory: 64Gi
+            limits:
+              cpu: "16"
+              memory: 64Gi
+          volumeMounts:
+            - name: disk
+              mountPath: /workspaces/tacscm-challenge
+              subPath: tacscm-challenge
+      volumes:
+        - name: disk
+          persistentVolumeClaim:
+            claimName: larsr-disk

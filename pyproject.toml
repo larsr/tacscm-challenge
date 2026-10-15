@@ -1,0 +1,31 @@
+[project]
+name = "tacscm-challenge"
+version = "1.0.0"
+description = "TAC SCM challenge kit: SDK, house agents and local runner"
+readme = "README.md"
+license = { text = "MIT" }
+requires-python = ">=3.11"
+# numpy and scipy pinned to the versions the house agents were verified with
+# (agents/requirements.txt).
+dependencies = [
+    "tac-scm-sdk",
+    "tac-scm-house-agents",
+    "numpy==2.2.6",
+    "scipy==1.16.3",
+]
+
+[dependency-groups]
+dev = ["pytest>=8"]
+
+[tool.uv]
+package = false
+
+[tool.uv.workspace]
+members = ["sdk", "agents"]
+
+[tool.uv.sources]
+tac-scm-sdk = { workspace = true }
+tac-scm-house-agents = { workspace = true }
+
+[tool.pytest.ini_options]
+testpaths = ["sdk/tests", "agents/tests"]

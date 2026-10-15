@@ -72,6 +72,26 @@ python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
    (`docker image inspect --format '{{.Id}}' my-agent`); your last
    submission before the deadline is the one that plays.
 
+### Dev container and uv (this fork)
+
+The root `pyproject.toml` is a uv workspace (`sdk`, `agents`, pinned numpy
+and scipy, `uv.lock`); `uv sync` replaces step 3 and `uv run` runs anything
+in that environment, e.g. `uv run python runner/play_game.py ...` and
+`uv run pytest`.
+
+- **Locally:** open the folder in VS Code and *Reopen in Container*.
+  `.devcontainer/setup.sh` builds the server, runs `uv sync` and fetches
+  the DeepMaize database (steps 2 to 4); Docker is available inside for
+  submission images.
+- **On ICE:** `ice/devpod.sh up` starts the same image as a 16-core, 64 GiB
+  pod in namespace `aic` (context `icekube`), clones this fork into
+  `tacscm-challenge/` on `larsr-disk` and runs the setup. Attach VS Code
+  from the Kubernetes view (*Attach Visual Studio Code*) or use
+  `ice/devpod.sh shell`; `ice/devpod.sh down` stops it and the checkout
+  stays on the disk. The image is published
+  to `ghcr.io/larsr/tacscm-challenge-devcontainer` by
+  `.github/workflows/devcontainer-image.yml`.
+
 Where to read next: `sdk/README.md` (writing an agent), `rules/` (the game),
 `tournament/SUBMISSION.md` (limits per seat), `tournament/FORMAT.md` (how
 the tournament is played and scored), `runner/README.md` (local games and
