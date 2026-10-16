@@ -80,8 +80,12 @@ uv run python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
   submission images. The image also holds, from Nix, the Haskell agent's
   tools (`haskell-agent/build.nix`'s `tools`): GHC with its dependencies,
   cabal, haskell-language-server, hlint, fourmolu, BNFC, alex and happy.
-  The volumes `tacscm-nix` (`/nix`) and `tacscm-cache` (`~/.cache`: cabal,
-  HLS, uv) persist across rebuilds; the setup brings the tools up to date.
+  The volumes `tacscm-nix` (`/nix`), `tacscm-cache` (`~/.cache`: cabal,
+  HLS, uv) and `tacscm-vscode-server` (`~/.vscode-server`: extensions,
+  chat history) persist across rebuilds; the setup brings the tools up to
+  date. Outside this container, `haskell-agent/scripts/hls` as
+  `haskell.serverExecutablePath` runs the language server in the Nix build
+  container (`haskell-agent/nix.py lsp`).
 - **On a Kubernetes cluster:** copy `.env.example` to `.env` (git-ignored)
   and fill in the cluster, namespace, image, volume and size. `ice/devpod.sh
   up` starts the same image as a pod, clones the repo into a folder of the

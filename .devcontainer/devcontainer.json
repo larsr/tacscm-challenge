@@ -13,10 +13,12 @@
         // For building submission images and playing `image:` seats.
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
     },
-    // Kept across rebuilds: the Nix store, filled from the image on first use, and the caches of cabal, HLS and uv.
+    // Kept across rebuilds: the Nix store, filled from the image on first use; the caches of cabal,
+    // HLS and uv; VS Code's server data (extensions, chat history and other extension state).
     "mounts": [
         "source=tacscm-nix,target=/nix,type=volume",
-        "source=tacscm-cache,target=/home/vscode/.cache,type=volume"
+        "source=tacscm-cache,target=/home/vscode/.cache,type=volume",
+        "source=tacscm-vscode-server,target=/home/vscode/.vscode-server,type=volume"
     ],
     "postCreateCommand": ".devcontainer/setup.sh",
     "customizations": {

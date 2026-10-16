@@ -10,7 +10,8 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     UV_PYTHON_PREFERENCE=only-managed \
     UV_LINK_MODE=copy \
     NIX_SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt \
-    PATH=/home/vscode/.nix-profile/bin:/usr/local/cargo/bin:$PATH
+    TOOLS_PROFILE=/nix/var/nix/profiles/tacscm-tools \
+    PATH=/nix/var/nix/profiles/tacscm-tools/bin:/home/vscode/.nix-profile/bin:/usr/local/cargo/bin:$PATH
 
 COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /uvx /usr/local/bin/
 
@@ -31,6 +32,11 @@ RUN curl -fsSL "https://releases.nixos.org/nix/nix-$NIX_VERSION/install" | sh -s
 
 # The Haskell tools of haskell-agent/build.nix, from its cabal file and grammar: GHC with the
 # agents' dependencies, cabal, haskell-language-server, hlint, fourmolu, BNFC, alex and happy.
+# Their profile lives in /nix with the store, so the two stay consistent on the /nix volume.
 COPY --chown=vscode haskell-agent/build.nix haskell-agent/tacscm-hs-agent.cabal /tmp/haskell-agent/
 COPY --chown=vscode haskell-agent/grammar /tmp/haskell-agent/grammar
-RUN nix-env --install --file /tmp/haskell-agent/build.nix --attr tools && rm -r /tmp/haskell-agent
+RUN nix-env --profile "$TOOLS_PROFILE" --install --file /tmp/haskell-agent/build.nix --attr tools \
+    && rm -r /tmp/haskell-agent
+
+# A new volume takes the owner of its mount point; VS Code's server must be able to write there.
+RUN mkdir -p /home/vscode/.vscode-server

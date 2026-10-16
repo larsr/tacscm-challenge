@@ -9,7 +9,7 @@ git config core.hooksPath .githooks
 
 # The /nix volume keeps what the image first filled it with; bring the Haskell tools up to date.
 if [[ -f haskell-agent/build.nix ]]; then
-    nix-env --install --file haskell-agent/build.nix --attr tools
+    nix-env --profile "$TOOLS_PROFILE" --install --file haskell-agent/build.nix --attr tools
 fi
 
 db=agents/models/deepmaize-v4-m2/pc-database.npz
