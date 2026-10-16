@@ -156,6 +156,8 @@ def main(argv: list[str] | None = None) -> int:
                         help=f"memory per seat in MiB (tournament: {SEAT_MEMORY_MIB})")
     parser.add_argument("--startup-grace-ms", type=int, default=STARTUP_GRACE_MS,
                         help=f"wait after start before day 0 (tournament: {STARTUP_GRACE_MS})")
+    parser.add_argument("--training-record", action="store_true",
+                        help="write every seat's daily observation and action to <out>/training.cbor")
     parser.add_argument("--deadline-ms", type=int, default=ACTION_DEADLINE_MS, help=argparse.SUPPRESS)
     arguments = parser.parse_args(argv)
 
@@ -174,6 +176,7 @@ def main(argv: list[str] | None = None) -> int:
     seats_dir.mkdir()
     tag = hashlib.sha256(str(arguments.out.resolve()).encode() + str(time.time()).encode()).hexdigest()[:10]
     rows = [prepare_seat(index, spec, arguments, seats_dir, tag) for index, spec in enumerate(arguments.agents)]
+    (seats_dir / "agents.json").write_text(json.dumps({row["seat"]: row["agent"] for row in rows}, indent=2) + "\n")
     campaign = "local"
     command = [
         str(arguments.server), "planned", str(game), seed, campaign,
@@ -189,6 +192,8 @@ def main(argv: list[str] | None = None) -> int:
         "TAC_SCM_EVIDENCE": "thin",
         "TAC_SCM_RUNTIME_SUMMARY": "1",
     })
+    if arguments.training_record:
+        environment["TAC_SCM_TRAINING_RECORD"] = str(arguments.out / "training.cbor")
     # Agents run with the Python environment of this script first on PATH.
     environment["PATH"] = os.pathsep.join([str(Path(sys.executable).parent), environment.get("PATH", "")])
     started = time.monotonic()

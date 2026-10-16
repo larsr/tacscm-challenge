@@ -7,11 +7,11 @@ its slowest decision. `paired_set.py` plays a small paired set: every root
 with the six agents rotated through all six seats.
 
 ```sh
-python runner/play_game.py --root 3 --out runs/g3 \
+uv run python runner/play_game.py --root 3 --out runs/g3 \
   tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 botticelli-inspired-v4-1 \
   narc-inspired-v1 iota-inspired-v1 image:my-agent
 
-python runner/paired_set.py --out runs/set1 --roots 0 1 2 \
+uv run python runner/paired_set.py --out runs/set1 --roots 0 1 2 \
   image:my-agent tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 \
   botticelli-inspired-v4-1 iota-inspired-v1 narc-inspired-v1
 ```
@@ -46,11 +46,14 @@ python runner/paired_set.py --out runs/set1 --roots 0 1 2 \
   under Docker before you submit it if you can.
 
 `--cpus`, `--memory-mib` and `--startup-grace-ms` change the seat class for
-experiments; the defaults are the tournament's.
+experiments; the defaults are the tournament's. `--training-record` writes
+every seat's daily observation and action to `<out>/training.cbor` (both
+scripts), as the game is played.
 
 ## Output
 
-- `play_game.py`: `<out>/result.json` (scores, defaults, slowest decision,
+- `play_game.py`: `<out>/seats/agents.json` (each seat's agent, written when
+  the game starts), `<out>/result.json` (scores, defaults, slowest decision,
   the image id or executable hash of every seat, the fallback's memory and
   CPU report per seat) and the runner's own files (game plan, action
   transcript, result record) in `<out>/game/`.
@@ -78,9 +81,8 @@ agents placed many orders).
 
 ## Tests
 
-The documented install has no test runner; add it to run the kit's tests:
+`uv sync` installs pytest with the `dev` dependency group:
 
 ```sh
-pip install pytest
-python -m pytest sdk/tests agents/tests
+uv run pytest
 ```

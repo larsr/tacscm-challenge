@@ -28,9 +28,10 @@ prepare is in this kit, the same for every entrant:
 
 ## Getting started
 
-Needs git, Rust 1.96 or later (`rustup`), Python 3.11 or later (3.12
-verified), and Docker (Docker 23 or later) for building a submission image. From a
-fresh clone to a submitted agent:
+Needs git, Rust 1.96 or later (`rustup`), [uv](https://docs.astral.sh/uv/)
+(it installs the Python 3.12 pinned in `.python-version`), and Docker (Docker
+23 or later) for building a submission image. From a fresh clone to a
+submitted agent:
 
 ```sh
 # 1. The kit at the edition's tag
@@ -40,17 +41,16 @@ cd tacscm-challenge
 # 2. The game server
 (cd server && cargo build --release --locked)
 
-# 3. The SDK and the house agents in a virtual environment
-python3.12 -m venv .venv && . .venv/bin/activate
-pip install -r agents/requirements.txt ./sdk -e ./agents
+# 3. The SDK and the house agents (the uv workspace in pyproject.toml, pinned by uv.lock)
+uv sync --locked
 
 # 4. The DeepMaize v4 database (210 MB, a release asset; agents/MODELS.md)
 curl -fL -o agents/models/deepmaize-v4-m2/pc-database.npz \
   https://github.com/rekrevs/tacscm-challenge/releases/download/v1.0/pc-database.npz
-python -m tac_scm_gallery.house --check-models
+uv run python -m tac_scm_gallery.house --check-models
 
 # 5. A game: the template agent against five house agents (3 to 5 minutes)
-python runner/play_game.py --root 0 --out runs/g0 \
+uv run python runner/play_game.py --root 0 --out runs/g0 \
   tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 botticelli-inspired-v4-1 \
   narc-inspired-v1 iota-inspired-v1 sdk/template/my_agent.py
 
@@ -59,7 +59,7 @@ python runner/play_game.py --root 0 --out runs/g0 \
 cp -r sdk/template my-agent        # then write your policy in my-agent/my_agent.py
 docker build --platform linux/amd64 -f sdk/template/Dockerfile \
   --build-arg AGENT=my-agent -t my-agent .
-python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
+uv run python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
   tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 botticelli-inspired-v4-1 \
   iota-inspired-v1 narc-inspired-v1
 ```
@@ -72,12 +72,7 @@ python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
    (`docker image inspect --format '{{.Id}}' my-agent`); your last
    submission before the deadline is the one that plays.
 
-### Dev container and uv (this fork)
-
-The root `pyproject.toml` is a uv workspace (`sdk`, `agents`, pinned numpy
-and scipy, `uv.lock`); `uv sync` replaces step 3 and `uv run` runs anything
-in that environment, e.g. `uv run python runner/play_game.py ...` and
-`uv run pytest`.
+### Dev container (this fork)
 
 - **Locally:** open the folder in VS Code and *Reopen in Container*.
   `.devcontainer/setup.sh` builds the server, runs `uv sync` and fetches
@@ -91,6 +86,12 @@ in that environment, e.g. `uv run python runner/play_game.py ...` and
   `ice/devpod.sh down` stops it and the checkout stays on the volume.
   `.github/workflows/devcontainer-image.yml` publishes the image to
   `ghcr.io/<owner>/<repo>-devcontainer`.
+- **Haskell agent:** `haskell-agent/scripts/run-tournament.sh [--pod |
+  --docker] [-f FIELD] [-r "ROOTS"] [AGENT]` builds `haskell-agent/`
+  (running its tests) and plays `tacscm-hs-AGENT` (default `crocodile`) in a
+  paired set against a house field of `tournament/FORMAT.md` (default
+  `primary`, root 0), here, in the dev pod or in a dev container image.
+  `haskell-agent/scripts/plot.py` serves live plots of the games under `runs/`.
 - **Commit checks:** `git config core.hooksPath .githooks` once per clone
   (the container setup does it) blocks commits containing secrets or `.env`.
 

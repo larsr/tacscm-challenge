@@ -38,6 +38,10 @@ case "${1:-}" in
     shell)
         k exec -it deployment/"$NAME" -- bash -l
         ;;
+    exec)
+        shift
+        k exec -i deployment/"$NAME" -- "$@"
+        ;;
     logs)
         k logs -f deployment/"$NAME"
         ;;
@@ -48,7 +52,7 @@ case "${1:-}" in
         k delete deployment/"$NAME"
         ;;
     *)
-        echo "usage: $0 up|down|status|shell|logs|render|delete" >&2
+        echo "usage: $0 up|down|status|shell|exec COMMAND...|logs|render|delete" >&2
         echo "  the checkout stays in \$DEVPOD_SUBPATH on volume \$DEVPOD_PVC. Settings: $env_file" >&2
         exit 2
         ;;

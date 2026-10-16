@@ -72,8 +72,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--memory-mib", type=int, help="as in play_game.py")
     parser.add_argument("--startup-grace-ms", type=int, help="as in play_game.py")
     parser.add_argument("--server", type=Path, help="as in play_game.py")
+    parser.add_argument("--training-record", action="store_true", help="as in play_game.py")
     arguments = parser.parse_args(argv)
     passthrough = ["--process-limits"] if arguments.process_limits else []
+    if arguments.training_record:
+        passthrough.append("--training-record")
     for option in ("cpus", "memory_mib", "startup_grace_ms", "server"):
         value = getattr(arguments, option)
         if value is not None:
