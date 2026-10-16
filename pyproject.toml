@@ -5,8 +5,7 @@ description = "TAC SCM challenge kit: SDK, house agents and local runner"
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.11"
-# numpy and scipy pinned to the versions the house agents were verified with
-# (agents/requirements.txt).
+# numpy and scipy pinned to the versions the house agents were verified with.
 dependencies = [
     "tac-scm-sdk",
     "tac-scm-house-agents",

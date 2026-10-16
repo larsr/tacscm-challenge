@@ -15,9 +15,8 @@ is new, how its models were trained, and its known limitations.
 
 ## The agents
 
-Each id is an executable after installation (`pip install -r
-agents/requirements.txt ./sdk -e ./agents`); `python -m tac_scm_gallery.house
---list` lists them.
+Each id is an executable after installation (`uv sync` at the repository
+root); `uv run python -m tac_scm_gallery.house --list` lists them.
 
 | Agent id | Role model | Claim | Models |
 |---|---|---|---|
@@ -62,7 +61,7 @@ associated with or endorsed by the University of Minnesota.
 ## Running them
 
 ```sh
-python runner/play_game.py --root 0 --out runs/h0 \
+uv run python runner/play_game.py --root 0 --out runs/h0 \
   tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 botticelli-inspired-v4-1 \
   narc-inspired-v1 iota-inspired-v1 socrates-inspired-v1
 ```
@@ -70,7 +69,8 @@ python runner/play_game.py --root 0 --out runs/h0 \
 Every id is a frozen configuration: the kernels' research overrides
 (`TAC_SCM_GALLERY_*` environment variables) are cleared at start, and the v4
 agents load only the model files listed in `MODELS.md`. The v4 agents need
-numpy and scipy (`requirements.txt` pins the verified versions); the v1 agents
+numpy and scipy (the root `pyproject.toml` and `uv.lock` pin the verified
+versions); the v1 agents
 need only the SDK. In the kit's test games on a laptop (Apple M4 Max, three or
 four games at once), a game of six house agents took 3 to 6 minutes. Per agent
 process:
@@ -91,7 +91,7 @@ Slower or shared CPUs take longer.
 ## Tests
 
 ```sh
-python -m pytest agents/tests
+uv run pytest agents/tests
 ```
 
 ## Licence

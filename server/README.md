@@ -44,7 +44,7 @@ Use the kit's runner (`runner/README.md`), which sets the profile and the
 tournament's deadline and prints the scores:
 
 ```sh
-python runner/play_game.py --root 0 --out runs/g0 AGENT AGENT AGENT AGENT AGENT AGENT
+uv run python runner/play_game.py --root 0 --out runs/g0 AGENT AGENT AGENT AGENT AGENT AGENT
 ```
 
 The runner binary directly, for reference:

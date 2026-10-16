@@ -10,21 +10,21 @@ template agent.
 | `template/my_agent.py` | a minimal agent that plays legally, to start from |
 | `PROTOCOL.md` | the stdio protocol, for an agent in any language |
 | `schema/contracts-v0.4.0.cddl` | the closed schema of every message and event |
-| `tests/` | SDK checks (`python -m pytest sdk/tests`) |
+| `tests/` | SDK checks (`uv run pytest sdk/tests`) |
 
 The SDK speaks `tac-scm-message/2`, the message schema of engine 0.5.1, under both
 profiles; it needs Python 3.11 or later.
 
 ## Install
 
-From the repository root, in a virtual environment:
+From the repository root, with [uv](https://docs.astral.sh/uv/):
 
 ```sh
-python3.12 -m venv .venv && . .venv/bin/activate
-pip install -r agents/requirements.txt ./sdk -e ./agents   # SDK, baselines and house agents
+uv sync --locked   # SDK, baselines and house agents
 ```
 
-`pip install ./sdk` alone installs the SDK and the console scripts
+Run commands in that environment with `uv run`. `uv sync --package
+tac-scm-sdk` installs only the SDK and the console scripts
 `baseline-random`, `baseline-heuristic` and `baseline-optimizer`.
 
 ## Write an agent
@@ -47,7 +47,7 @@ raise SystemExit(serve(MyAgent()))
 buy). Make the file executable and play it against the house agents:
 
 ```sh
-python runner/play_game.py --root 0 --out runs/t0 sdk/template/my_agent.py \
+uv run python runner/play_game.py --root 0 --out runs/t0 sdk/template/my_agent.py \
   baseline-heuristic iota-inspired-v1 narc-inspired-v1 minnetac-inspired-v1 botticelli-inspired-v4
 ```
 

@@ -26,7 +26,7 @@ Build from the root of the kit:
 cp -r sdk/template my-agent        # then edit my-agent/my_agent.py
 docker build --platform linux/amd64 -f sdk/template/Dockerfile \
   --build-arg AGENT=my-agent -t my-agent .
-python runner/play_game.py --out runs/t1 image:my-agent \
+uv run python runner/play_game.py --out runs/t1 image:my-agent \
   tactex-inspired-v4-m5 deepmaize-inspired-v4-m2 botticelli-inspired-v4-1 \
   iota-inspired-v1 narc-inspired-v1
 ```

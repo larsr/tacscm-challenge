@@ -1,7 +1,7 @@
 # House agent models
 
 The learned parts of the house agents and how they were trained. Every file
-is listed with its SHA-256; `python -m tac_scm_gallery.house --check-models`
+is listed with its SHA-256; `uv run python -m tac_scm_gallery.house --check-models`
 verifies the v4 model directory.
 
 ## Where the files are
@@ -22,7 +22,7 @@ verifies the v4 model directory.
 no file; the other v1 agents have no learned parts.
 
 The v4 agents read `agents/models/` (with the agents installed in editable
-mode, `pip install -e ./agents`, or run from a checkout) or the directory named
+mode, as `uv sync` does, or run from a checkout) or the directory named
 by `TAC_SCM_HOUSE_MODELS`. A v4 agent whose model file is missing exits at
 start with a message naming the file; it never plays untrained.
 
@@ -45,7 +45,7 @@ Then check it:
 ```sh
 shasum -a 256 agents/models/deepmaize-v4-m2/pc-database.npz
 # d5059386e7fc232700c839bf73be3f212ad266cd0b01559e79b62144935471ca
-python -m tac_scm_gallery.house --check-models
+uv run python -m tac_scm_gallery.house --check-models
 ```
 
 The path is git-ignored. If the download does not work for you, ask the
