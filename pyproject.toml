@@ -16,6 +16,9 @@ dependencies = [
 
 [dependency-groups]
 dev = ["pytest>=8", "pre-commit>=4"]
+mcp = [
+    "mcp>=2.3,<3",
+]
 
 [tool.uv]
 package = false

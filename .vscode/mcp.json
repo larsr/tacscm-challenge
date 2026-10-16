@@ -1,0 +1,10 @@
+{
+    "servers": {
+        "tacscm": {
+            "type": "stdio",
+            "command": "uv",
+            "args": ["run", "--group", "mcp", "python", "tacscm_mcp/server.py"],
+            "cwd": "${workspaceFolder}"
+        }
+    }
+}
