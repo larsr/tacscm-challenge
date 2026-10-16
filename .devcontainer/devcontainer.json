@@ -1,7 +1,8 @@
 {
     "name": "tacscm-challenge",
     "build": {
-        "dockerfile": "Dockerfile"
+        "dockerfile": "Dockerfile",
+        "context": ".."
     },
     "remoteUser": "vscode",
     // Outside the bind-mounted checkout, so it doesn't clash with a .venv made on the host.
@@ -12,15 +13,23 @@
         // For building submission images and playing `image:` seats.
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}
     },
+    // Kept across rebuilds: the Nix store, filled from the image on first use, and the caches of cabal, HLS and uv.
+    "mounts": [
+        "source=tacscm-nix,target=/nix,type=volume",
+        "source=tacscm-cache,target=/home/vscode/.cache,type=volume"
+    ],
     "postCreateCommand": ".devcontainer/setup.sh",
     "customizations": {
         "vscode": {
             "extensions": [
+                "haskell.haskell",
                 "ms-python.python",
                 "rust-lang.rust-analyzer",
                 "tamasfe.even-better-toml"
             ],
             "settings": {
+                // GHC, cabal and haskell-language-server come from haskell-agent/build.nix's tools, on PATH.
+                "haskell.manageHLS": "PATH",
                 "python.defaultInterpreterPath": "/home/vscode/.venv/bin/python",
                 "python.testing.pytestEnabled": true
             }

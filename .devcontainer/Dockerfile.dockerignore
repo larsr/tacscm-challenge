@@ -1,5 +1,8 @@
-# The build context is the repo root; only the version pin files are needed.
+# The build context is the repo root; only the version pin files and the Haskell tools' inputs are needed.
 *
 !rust-toolchain.toml
 !.python-version
 !pyproject.toml
+!haskell-agent/build.nix
+!haskell-agent/tacscm-hs-agent.cabal
+!haskell-agent/grammar

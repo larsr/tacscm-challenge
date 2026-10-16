@@ -7,6 +7,11 @@ cd "$(dirname "$0")/.."
 uv sync --locked
 git config core.hooksPath .githooks
 
+# The /nix volume keeps what the image first filled it with; bring the Haskell tools up to date.
+if [[ -f haskell-agent/build.nix ]]; then
+    nix-env --install --file haskell-agent/build.nix --attr tools
+fi
+
 db=agents/models/deepmaize-v4-m2/pc-database.npz
 sha=d5059386e7fc232700c839bf73be3f212ad266cd0b01559e79b62144935471ca
 if ! echo "$sha  $db" | sha256sum --check --status 2>/dev/null; then

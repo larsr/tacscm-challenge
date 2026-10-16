@@ -77,7 +77,11 @@ uv run python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
 - **Locally:** open the folder in VS Code and *Reopen in Container*.
   `.devcontainer/setup.sh` builds the server, runs `uv sync` and fetches
   the DeepMaize database (steps 2 to 4); Docker is available inside for
-  submission images.
+  submission images. The image also holds, from Nix, the Haskell agent's
+  tools (`haskell-agent/build.nix`'s `tools`): GHC with its dependencies,
+  cabal, haskell-language-server, hlint, fourmolu, BNFC, alex and happy.
+  The volumes `tacscm-nix` (`/nix`) and `tacscm-cache` (`~/.cache`: cabal,
+  HLS, uv) persist across rebuilds; the setup brings the tools up to date.
 - **On a Kubernetes cluster:** copy `.env.example` to `.env` (git-ignored)
   and fill in the cluster, namespace, image, volume and size. `ice/devpod.sh
   up` starts the same image as a pod, clones the repo into a folder of the
@@ -88,7 +92,7 @@ uv run python runner/play_game.py --root 1 --out runs/g1 image:my-agent \
   `ghcr.io/<owner>/<repo>-devcontainer`.
 - **Haskell agent:** `haskell-agent/scripts/run-tournament.sh [--pod |
   --docker] [-f FIELD] [-r "ROOTS"] [AGENT]` builds `haskell-agent/`
-  (running its tests) and plays `tacscm-hs-AGENT` (default `crocodile`) in a
+  (running its tests) and plays `tacscm-hs-AGENT` (default `tracker`) in a
   paired set against a house field of `tournament/FORMAT.md` (default
   `primary`, root 0), here, in the dev pod or in a dev container image.
   `haskell-agent/scripts/plot.py` serves live plots of the games under `runs/`.
