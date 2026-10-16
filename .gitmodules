@@ -1,0 +1,3 @@
+[submodule "haskell-agent"]
+	path = haskell-agent
+	url = https://github.com/larsr/tacscm-hs-agent.git
