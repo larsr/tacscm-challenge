@@ -1,0 +1,3 @@
+#!/bin/sh
+# Runs the checks in .pre-commit-config.yaml through uv, so no environment needs to be on PATH.
+exec uv run --frozen pre-commit run

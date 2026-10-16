@@ -1,0 +1,17 @@
+repos:
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.30.1
+    hooks:
+      - id: gitleaks
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v6.0.0
+    hooks:
+      - id: detect-private-key
+  - repo: local
+    hooks:
+      - id: no-env-files
+        name: no .env files (use .env.example for templates)
+        language: fail
+        entry: ".env files hold local infrastructure settings and must not be committed"
+        files: (^|/)\.env(\..+)?$
+        exclude: \.example$

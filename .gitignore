@@ -4,6 +4,7 @@ __pycache__/
 *.egg-info/
 build/
 .venv/
+.env
 /runs/
 .DS_Store
 # Built by server/scripts/build-test-baselines for the runner tests.

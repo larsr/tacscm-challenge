@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 
 (cd server && cargo build --release --locked)
 uv sync --locked
+git config core.hooksPath .githooks
 
 db=agents/models/deepmaize-v4-m2/pc-database.npz
 sha=d5059386e7fc232700c839bf73be3f212ad266cd0b01559e79b62144935471ca

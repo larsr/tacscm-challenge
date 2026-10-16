@@ -1,38 +1,42 @@
-# Dev pod for the TAC SCM kit on ICE: the .devcontainer image, the fork cloned into tacscm-challenge/ on larsr-disk.
+# Dev pod: the .devcontainer image with the repo cloned into a folder of an existing volume.
+# Rendered by ice/devpod.sh; ${DEVPOD_*} come from .env.
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: tacscm-dev
+  name: ${DEVPOD_NAME}
   labels:
-    app: tacscm-dev
+    app: ${DEVPOD_NAME}
 spec:
   replicas: 1
   strategy:
-    type: Recreate  # the disk is ReadWriteOnce
+    type: Recreate  # the volume is ReadWriteOnce
   selector:
     matchLabels:
-      app: tacscm-dev
+      app: ${DEVPOD_NAME}
   template:
     metadata:
       labels:
-        app: tacscm-dev
+        app: ${DEVPOD_NAME}
     spec:
       imagePullSecrets:
-        - name: ghcr-pull-secret
-      # No fsGroup: it would re-own the whole shared disk. Only our folder is chowned.
+        - name: ${DEVPOD_PULL_SECRET}
+      # No fsGroup: it would re-own the whole shared volume. Only our folder is chowned.
       initContainers:
         - name: workspace-owner
-          image: ghcr.io/larsr/tacscm-challenge-devcontainer:latest
+          image: ${DEVPOD_IMAGE}
           imagePullPolicy: Always
           securityContext:
             runAsUser: 0
-          command: [sh, -c, "mkdir -p /disk/tacscm-challenge && chown 1000:1000 /disk/tacscm-challenge"]
+          resources:  # the namespace quota requires these on every container
+            requests: {cpu: 100m, memory: 64Mi}
+            limits: {cpu: 100m, memory: 64Mi}
+          command: [sh, -c, "mkdir -p /disk/${DEVPOD_SUBPATH} && chown 1000:1000 /disk/${DEVPOD_SUBPATH}"]
           volumeMounts:
             - name: disk
               mountPath: /disk
       containers:
         - name: dev
-          image: ghcr.io/larsr/tacscm-challenge-devcontainer:latest
+          image: ${DEVPOD_IMAGE}
           imagePullPolicy: Always
           securityContext:
             runAsUser: 1000
@@ -40,7 +44,7 @@ spec:
           workingDir: /workspaces/tacscm-challenge
           env:
             - name: REPO_URL
-              value: https://github.com/larsr/tacscm-challenge.git
+              value: ${DEVPOD_REPO_URL}
           command: [bash, -c]
           args:
             - |
@@ -54,16 +58,16 @@ spec:
             periodSeconds: 10
           resources:
             requests:
-              cpu: "16"
-              memory: 64Gi
+              cpu: "${DEVPOD_CPU}"
+              memory: ${DEVPOD_MEMORY}
             limits:
-              cpu: "16"
-              memory: 64Gi
+              cpu: "${DEVPOD_CPU}"
+              memory: ${DEVPOD_MEMORY}
           volumeMounts:
             - name: disk
               mountPath: /workspaces/tacscm-challenge
-              subPath: tacscm-challenge
+              subPath: ${DEVPOD_SUBPATH}
       volumes:
         - name: disk
           persistentVolumeClaim:
-            claimName: larsr-disk
+            claimName: ${DEVPOD_PVC}

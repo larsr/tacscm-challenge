@@ -7,9 +7,8 @@ ENV RUSTUP_HOME=/usr/local/rustup \
     CARGO_HOME=/usr/local/cargo \
     UV_PYTHON_INSTALL_DIR=/usr/local/share/uv/python \
     UV_PYTHON_PREFERENCE=only-managed \
-    UV_PROJECT_ENVIRONMENT=/home/vscode/.venv \
     UV_LINK_MODE=copy \
-    PATH=/home/vscode/.venv/bin:/usr/local/cargo/bin:$PATH
+    PATH=/usr/local/cargo/bin:$PATH
 
 COPY --from=ghcr.io/astral-sh/uv:0.8.22 /uv /uvx /usr/local/bin/
 

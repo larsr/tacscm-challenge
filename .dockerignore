@@ -4,3 +4,4 @@
 **/*.egg-info
 server/baselines
 runs
+.env

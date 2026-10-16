@@ -1,0 +1,5 @@
+# The build context is the repo root; only the version pin files are needed.
+*
+!rust-toolchain.toml
+!.python-version
+!pyproject.toml

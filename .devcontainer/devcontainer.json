@@ -4,6 +4,10 @@
         "dockerfile": "Dockerfile"
     },
     "remoteUser": "vscode",
+    // Outside the bind-mounted checkout, so it doesn't clash with a .venv made on the host.
+    "containerEnv": {
+        "UV_PROJECT_ENVIRONMENT": "/home/vscode/.venv"
+    },
     "features": {
         // For building submission images and playing `image:` seats.
         "ghcr.io/devcontainers/features/docker-outside-of-docker:1": {}

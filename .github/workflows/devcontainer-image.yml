@@ -25,5 +25,5 @@ jobs:
           context: .devcontainer
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/tacscm-challenge-devcontainer:latest
-            ghcr.io/${{ github.repository_owner }}/tacscm-challenge-devcontainer:${{ github.sha }}
+            ghcr.io/${{ github.repository }}-devcontainer:latest
+            ghcr.io/${{ github.repository }}-devcontainer:${{ github.sha }}
